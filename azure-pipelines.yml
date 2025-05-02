@@ -1,0 +1,49 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'windows-latest'  # or 'windows-latest' if you need emulator support
+
+variables:
+  appium_port: 4723
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: ' 3.13.0'
+    addToPath: true
+
+- script: |
+    sudo apt update
+    sudo apt install -y curl nodejs npm default-jdk android-sdk adb
+    pip install -U pip
+    pip install robotframework robotframework-appiumlibrary Appium-Python-Client
+  displayName: 'Install dependencies'
+
+- script: |
+    npm install -g appium
+    appium --version
+  displayName: 'Install Appium'
+
+- script: |
+    nohup appium -p $(appium_port) > appium.log 2>&1 &
+    sleep 10
+    curl --fail http://127.0.0.1:$(appium_port)/wd/hub/status
+  displayName: 'Start Appium server and check status'
+
+- script: |
+    robot --variable APPIUM_PORT:$(appium_port) tests/
+  displayName: 'Run Robot Framework Appium tests'
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/output.xml'
+    failTaskOnFailedTests: true
+  condition: succeededOrFailed()
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '.'
+    artifactName: 'RobotAppiumReports'
+    publishLocation: 'Container'
