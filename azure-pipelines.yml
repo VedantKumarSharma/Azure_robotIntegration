@@ -1,8 +1,10 @@
 trigger:
-  - main
+  branches:
+    include:
+      - main
 
 pool:
-  vmImage: 'windows-latest'  # or 'windows-latest' if you need emulator support
+  vmImage: 'ubuntu-latest'  # Use Linux agent for apt, curl, etc.
 
 variables:
   appium_port: 4723
@@ -44,6 +46,6 @@ steps:
 
 - task: PublishBuildArtifacts@1
   inputs:
-    pathToPublish: '.'
+    pathToPublish: 'results'
     artifactName: 'RobotAppiumReports'
     publishLocation: 'Container'
